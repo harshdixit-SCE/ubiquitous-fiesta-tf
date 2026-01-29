@@ -9,3 +9,21 @@ variable "vpc_cidr" {
   description = "The CIDR block for the VPC"
   default     = "10.0.0.0/16"
 }
+
+# Database Variables
+variable "db_name" {
+  type        = string
+  description = "Name of the database"
+}
+
+variable "db_username" {
+  type        = string
+  description = "Database master username"
+  sensitive   = true
+}
+
+variable "db_password" {
+  type        = string
+  description = "Database master password"
+  sensitive   = true
+}
