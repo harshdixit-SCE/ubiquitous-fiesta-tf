@@ -11,10 +11,6 @@ on:
         options:
           - dev
           - prod
-      namespace:
-        description: "Your personal namespace (e.g. harsh) — must be unique per engineer"
-        required: true
-        type: string
       action:
         description: "Action to perform"
         required: true
@@ -64,7 +60,6 @@ jobs:
         run: |
           terraform plan \
             -var-file="../environments/${{ inputs.environment }}/${{ inputs.environment }}.tfvars" \
-            -var="namespace=${{ inputs.namespace }}" \
             -out=tfplan
 
       - name: Terraform Apply

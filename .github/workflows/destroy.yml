@@ -11,10 +11,6 @@ on:
         options:
           - dev
           - prod
-      namespace:
-        description: "Your personal namespace (e.g. harsh) — must match the one used during deploy"
-        required: true
-        type: string
       confirm:
         description: "Type DESTROY to confirm — this will delete all resources"
         required: true
@@ -63,5 +59,4 @@ jobs:
         run: |
           terraform destroy \
             -var-file="../environments/${{ inputs.environment }}/${{ inputs.environment }}.tfvars" \
-            -var="namespace=${{ inputs.namespace }}" \
             -auto-approve
