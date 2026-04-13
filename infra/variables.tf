@@ -27,6 +27,11 @@ variable "vpc_cidr" {
 }
 
 # Database Non-Sensitive Configuration
+variable "db_username" {
+  type        = string
+  description = "Master username for the database"
+}
+
 variable "db_name" {
   type        = string
   description = "Name of the database"

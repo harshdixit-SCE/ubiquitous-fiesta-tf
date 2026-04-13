@@ -17,6 +17,7 @@ module "database" {
   project_tags = var.project_tags
 
   # Database Configuration
+  db_username             = var.db_username
   db_name                 = var.db_name
   instance_class          = var.instance_class
   allocated_storage       = var.allocated_storage

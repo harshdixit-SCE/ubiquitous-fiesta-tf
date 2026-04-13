@@ -1,14 +1,26 @@
-# Fetch DB credentials from AWS Secrets Manager
-data "aws_secretsmanager_secret" "db_credentials" {
-  name = "${var.namespace}/${var.env}/db/credentials"
+# Generate a random password for the DB
+resource "random_password" "db" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-data "aws_secretsmanager_secret_version" "db_credentials" {
-  secret_id = data.aws_secretsmanager_secret.db_credentials.id
+# Store credentials in AWS Secrets Manager
+resource "aws_secretsmanager_secret" "db_credentials" {
+  name        = "${var.namespace}/${var.env}/db/credentials"
+  description = "DB credentials for ${var.namespace} ${var.env} MySQL instance"
+
+  tags = merge(var.project_tags, {
+    Name = "${var.namespace}-${var.env}-db-credentials"
+  })
 }
 
-locals {
-  db_credentials = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string)
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = aws_secretsmanager_secret.db_credentials.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = random_password.db.result
+  })
 }
 
 # DB Subnet Group - Groups private subnets for RDS placement
@@ -83,34 +95,34 @@ resource "aws_db_instance" "this" {
   allocated_storage     = var.allocated_storage
   storage_type          = "gp3"
   storage_encrypted     = true
-  max_allocated_storage = var.allocated_storage * 2 # Enable storage autoscaling
+  max_allocated_storage = var.allocated_storage * 2
 
   # Database Configuration
   db_name  = var.db_name
-  username = local.db_credentials["username"]
-  password = local.db_credentials["password"]
+  username = var.db_username
+  password = random_password.db.result
   port     = 3306
 
   # Network Configuration
   db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = [aws_security_group.rds.id]
   publicly_accessible    = false
-  multi_az               = false # Single-AZ for dev
+  multi_az               = false
 
   # Parameter and Option Groups
   parameter_group_name = aws_db_parameter_group.this.name
 
   # Backup Configuration
   backup_retention_period = var.backup_retention_period
-  backup_window           = "03:00-04:00"    # 3-4 AM UTC
-  maintenance_window      = "mon:04:00-mon:05:00" # Monday 4-5 AM UTC
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "mon:04:00-mon:05:00"
 
   # Snapshot Configuration
   skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.namespace}-${var.env}-mysql-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   # Deletion Protection
-  deletion_protection = false # Set to true for production
+  deletion_protection = false
 
   # Monitoring
   enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
@@ -118,4 +130,6 @@ resource "aws_db_instance" "this" {
   tags = merge(var.project_tags, {
     Name = "${var.namespace}-${var.env}-mysql-db"
   })
+
+  depends_on = [aws_secretsmanager_secret_version.db_credentials]
 }

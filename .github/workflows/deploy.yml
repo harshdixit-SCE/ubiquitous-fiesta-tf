@@ -42,28 +42,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Push DB credentials to AWS Secrets Manager
-        run: |
-          SECRET_NAME="${{ inputs.namespace }}/${{ inputs.environment }}/db/credentials"
-          SECRET_VALUE=$(jq -n \
-            --arg u "${{ secrets.DB_USERNAME }}" \
-            --arg p "${{ secrets.DB_PASSWORD }}" \
-            '{"username": $u, "password": $p}')
-
-          # Create secret if it doesn't exist, otherwise update it
-          if aws secretsmanager describe-secret --secret-id "$SECRET_NAME" > /dev/null 2>&1; then
-            aws secretsmanager put-secret-value \
-              --secret-id "$SECRET_NAME" \
-              --secret-string "$SECRET_VALUE"
-            echo "Updated existing secret: $SECRET_NAME"
-          else
-            aws secretsmanager create-secret \
-              --name "$SECRET_NAME" \
-              --description "DB credentials for ${{ inputs.namespace }} ${{ inputs.environment }}" \
-              --secret-string "$SECRET_VALUE"
-            echo "Created new secret: $SECRET_NAME"
-          fi
-
       - name: Terraform Init
         run: |
           terraform init \
