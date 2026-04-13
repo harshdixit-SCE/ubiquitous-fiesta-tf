@@ -1,0 +1,50 @@
+name: Bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      state_bucket_name:
+        description: "Globally unique S3 bucket name for Terraform state (e.g. harsh-tf-state-ap-south-1)"
+        required: true
+        type: string
+      aws_region:
+        description: "AWS region"
+        required: true
+        default: "ap-south-1"
+        type: string
+
+jobs:
+  bootstrap:
+    name: Bootstrap Remote State
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: bootstrap
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.0"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var="state_bucket_name=${{ inputs.state_bucket_name }}" \
+            -var="aws_region=${{ inputs.aws_region }}"
