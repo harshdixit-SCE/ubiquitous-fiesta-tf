@@ -7,15 +7,10 @@ terraform {
       version = "~> 6.0"
     }
   }
+  # Bootstrap uses local state — it creates the remote backend,
+  # so it cannot use it itself.
 }
 
 provider "aws" {
-  region = "us-east-1"
-
-  default_tags {
-    tags = {
-      Environment = "dev"
-      ManagedBy   = "Terraform"
-    }
-  }
+  region = var.aws_region
 }
