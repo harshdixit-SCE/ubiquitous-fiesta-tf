@@ -1,3 +1,3 @@
-bucket = "your-tf-state-bucket"
+bucket = "harsh-tf-state-ap-south-1"
 key    = "prod/terraform.tfstate"
-region = "us-east-1"
+region = "ap-south-1"
