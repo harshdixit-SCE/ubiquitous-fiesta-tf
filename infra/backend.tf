@@ -6,7 +6,7 @@ terraform {
     # bucket         = provided via backend.hcl
     # key            = provided via backend.hcl
     # region         = provided via backend.hcl
-    dynamodb_table = "terraform-state-lock"
-    encrypt        = true
+    encrypt  = true
+    # use_lockfile = true is set per environment in backend.hcl
   }
 }
