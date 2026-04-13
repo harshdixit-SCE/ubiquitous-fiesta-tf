@@ -11,10 +11,6 @@ on:
         options:
           - dev
           - prod
-      namespace:
-        description: "Your personal namespace (e.g. harsh) — must match the one used during deploy"
-        required: true
-        type: string
       confirm:
         description: "Type DESTROY to confirm — this will delete all resources"
         required: true
@@ -46,7 +42,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "~> 1.0"
+          terraform_version: "~> 1.10"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -57,11 +53,10 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init \
-            -backend-config="../environments/${{ inputs.environment }}/backend.hcl"
+            -backend-config="$GITHUB_WORKSPACE/environments/${{ inputs.environment }}/backend.hcl"
 
       - name: Terraform Destroy
         run: |
           terraform destroy \
-            -var-file="../environments/${{ inputs.environment }}/${{ inputs.environment }}.tfvars" \
-            -var="namespace=${{ inputs.namespace }}" \
+            -var-file="$GITHUB_WORKSPACE/environments/${{ inputs.environment }}/${{ inputs.environment }}.tfvars" \
             -auto-approve
