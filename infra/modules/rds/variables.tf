@@ -36,18 +36,6 @@ variable "db_name" {
   description = "Name of the initial database to create"
 }
 
-variable "db_username" {
-  type        = string
-  description = "Master username for the database"
-  sensitive   = true
-}
-
-variable "db_password" {
-  type        = string
-  description = "Master password for the database"
-  sensitive   = true
-}
-
 # RDS Instance Configuration
 variable "instance_class" {
   type        = string

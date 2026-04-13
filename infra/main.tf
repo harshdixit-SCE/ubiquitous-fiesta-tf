@@ -18,8 +18,6 @@ module "database" {
 
   # Database Configuration
   db_name                 = var.db_name
-  db_username             = var.db_username
-  db_password             = var.db_password
   instance_class          = var.instance_class
   allocated_storage       = var.allocated_storage
   engine_version          = var.engine_version

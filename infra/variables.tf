@@ -57,15 +57,3 @@ variable "skip_final_snapshot" {
   description = "Skip final snapshot on deletion"
 }
 
-# Database Sensitive Variables
-variable "db_username" {
-  type        = string
-  description = "Database master username"
-  sensitive   = true
-}
-
-variable "db_password" {
-  type        = string
-  description = "Database master password"
-  sensitive   = true
-}

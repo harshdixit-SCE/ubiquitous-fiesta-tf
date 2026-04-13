@@ -1,3 +1,16 @@
+# Fetch DB credentials from AWS Secrets Manager
+data "aws_secretsmanager_secret" "db_credentials" {
+  name = "${var.namespace}/${var.env}/db/credentials"
+}
+
+data "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = data.aws_secretsmanager_secret.db_credentials.id
+}
+
+locals {
+  db_credentials = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string)
+}
+
 # DB Subnet Group - Groups private subnets for RDS placement
 resource "aws_db_subnet_group" "this" {
   name       = "${var.namespace}-${var.env}-rds-subnet-group"
@@ -74,8 +87,8 @@ resource "aws_db_instance" "this" {
 
   # Database Configuration
   db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
+  username = local.db_credentials["username"]
+  password = local.db_credentials["password"]
   port     = 3306
 
   # Network Configuration
