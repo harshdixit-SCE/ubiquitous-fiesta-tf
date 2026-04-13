@@ -4,6 +4,11 @@ variable "env" {
   description = "Environment name (e.g., dev, staging, prod)"
 }
 
+variable "namespace" {
+  type        = string
+  description = "Personal namespace to avoid resource name conflicts in shared accounts (e.g., your name/alias)"
+}
+
 variable "vpc_id" {
   type        = string
   description = "VPC ID where RDS will be deployed"

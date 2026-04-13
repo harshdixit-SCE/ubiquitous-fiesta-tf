@@ -1,21 +1,21 @@
 # DB Subnet Group - Groups private subnets for RDS placement
 resource "aws_db_subnet_group" "this" {
-  name       = "${var.env}-rds-subnet-group"
+  name       = "${var.namespace}-${var.env}-rds-subnet-group"
   subnet_ids = var.subnet_ids
 
   tags = merge(var.project_tags, {
-    Name = "${var.env}-rds-subnet-group"
+    Name = "${var.namespace}-${var.env}-rds-subnet-group"
   })
 }
 
 # Security Group for RDS
 resource "aws_security_group" "rds" {
-  name        = "${var.env}-rds-sg"
+  name        = "${var.namespace}-${var.env}-rds-sg"
   description = "Security group for RDS MySQL instance"
   vpc_id      = var.vpc_id
 
   tags = merge(var.project_tags, {
-    Name = "${var.env}-rds-sg"
+    Name = "${var.namespace}-${var.env}-rds-sg"
   })
 }
 
@@ -30,7 +30,7 @@ resource "aws_vpc_security_group_ingress_rule" "mysql" {
   ip_protocol = "tcp"
 
   tags = merge(var.project_tags, {
-    Name = "${var.env}-rds-mysql-ingress"
+    Name = "${var.namespace}-${var.env}-rds-mysql-ingress"
   })
 }
 
@@ -43,23 +43,23 @@ resource "aws_vpc_security_group_egress_rule" "all" {
   ip_protocol = "-1"
 
   tags = merge(var.project_tags, {
-    Name = "${var.env}-rds-egress"
+    Name = "${var.namespace}-${var.env}-rds-egress"
   })
 }
 
 # DB Parameter Group - Custom MySQL configuration
 resource "aws_db_parameter_group" "this" {
-  name   = "${var.env}-mysql-params"
+  name   = "${var.namespace}-${var.env}-mysql-params"
   family = "mysql8.0"
 
   tags = merge(var.project_tags, {
-    Name = "${var.env}-mysql-params"
+    Name = "${var.namespace}-${var.env}-mysql-params"
   })
 }
 
 # RDS MySQL Instance
 resource "aws_db_instance" "this" {
-  identifier = "${var.env}-mysql-db"
+  identifier = "${var.namespace}-${var.env}-mysql-db"
 
   # Engine Configuration
   engine         = "mysql"
@@ -94,7 +94,7 @@ resource "aws_db_instance" "this" {
 
   # Snapshot Configuration
   skip_final_snapshot       = var.skip_final_snapshot
-  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.env}-mysql-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.namespace}-${var.env}-mysql-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   # Deletion Protection
   deletion_protection = false # Set to true for production
@@ -103,6 +103,6 @@ resource "aws_db_instance" "this" {
   enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
 
   tags = merge(var.project_tags, {
-    Name = "${var.env}-mysql-db"
+    Name = "${var.namespace}-${var.env}-mysql-db"
   })
 }

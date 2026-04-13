@@ -2,6 +2,7 @@ module "network" {
   source       = "./modules/vpc"
   vpc_cidr     = var.vpc_cidr
   env          = var.env
+  namespace    = var.namespace
   project_tags = var.project_tags
 }
 
@@ -9,6 +10,7 @@ module "database" {
   source = "./modules/rds"
 
   env          = var.env
+  namespace    = var.namespace
   vpc_id       = module.network.vpc_id
   subnet_ids   = module.network.private_subnet_ids
   vpc_cidr     = module.network.vpc_cidr
