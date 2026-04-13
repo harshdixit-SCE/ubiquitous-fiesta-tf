@@ -15,6 +15,14 @@ on:
         description: "Your personal namespace (e.g. harsh) — must be unique per engineer"
         required: true
         type: string
+      action:
+        description: "Action to perform"
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - plan-and-apply
 
 jobs:
   deploy:
@@ -60,4 +68,5 @@ jobs:
             -out=tfplan
 
       - name: Terraform Apply
+        if: inputs.action == 'plan-and-apply'
         run: terraform apply -auto-approve tfplan
