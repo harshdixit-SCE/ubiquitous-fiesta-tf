@@ -1,6 +1,23 @@
 name: Terraform Deploy
 
 on:
+  # Run plan automatically on pull requests targeting main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "infra/**"
+      - "environments/**"
+
+  # Run apply automatically when PR is merged to main
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/**"
+      - "environments/**"
+
+  # Manual trigger — useful for deploying to prod or re-running plan on dev
   workflow_dispatch:
     inputs:
       environment:
@@ -21,19 +38,30 @@ on:
           - plan-and-apply
 
 jobs:
-  deploy:
-    name: Terraform Apply
+  terraform:
+    name: Terraform ${{ github.event_name == 'pull_request' && 'Plan' || github.event_name == 'push' && 'Apply' || inputs.action }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+
+    # Derive environment:
+    #   PR / push to main → prod
+    #   Manual            → user input
+    environment: ${{ github.event_name != 'workflow_dispatch' && 'prod' || inputs.environment }}
+
     permissions:
       id-token: write
       contents: read
+      pull-requests: write # required to post plan as PR comment
 
     defaults:
       run:
         working-directory: infra
 
+    env:
+      TF_ENV: ${{ github.event_name != 'workflow_dispatch' && 'prod' || inputs.environment }}
+
     steps:
+      # ── Setup ────────────────────────────────────────────────────────────────
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -48,20 +76,53 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-south-1
 
+      # ── Init & Validate ───────────────────────────────────────────────────────
+
       - name: Terraform Init
         run: |
           terraform init \
-            -backend-config="$GITHUB_WORKSPACE/environments/${{ inputs.environment }}/backend.hcl"
+            -backend-config="$GITHUB_WORKSPACE/environments/${{ env.TF_ENV }}/backend.hcl"
 
       - name: Terraform Validate
         run: terraform validate
 
+      # ── Plan ─────────────────────────────────────────────────────────────────
+
       - name: Terraform Plan
+        id: plan
         run: |
           terraform plan \
-            -var-file="$GITHUB_WORKSPACE/environments/${{ inputs.environment }}/${{ inputs.environment }}.tfvars" \
-            -out=tfplan
+            -var-file="$GITHUB_WORKSPACE/environments/${{ env.TF_ENV }}/${{ env.TF_ENV }}.tfvars" \
+            -out=tfplan \
+            -no-color 2>&1 | tee plan_output.txt
+
+      # Upload plan as artifact — reused by apply step and available for review
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ env.TF_ENV }}-${{ github.run_id }}
+          path: infra/tfplan
+          retention-days: 5
+
+      # Post plan output as a PR comment so reviewers can see what will change
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infra/plan_output.txt', 'utf8');
+            const truncated = plan.length > 60000 ? plan.slice(0, 60000) + '\n\n... (truncated)' : plan;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Plan — \`${{ env.TF_ENV }}\`\n\`\`\`hcl\n${truncated}\n\`\`\``
+            });
+
+      # ── Apply ─────────────────────────────────────────────────────────────────
+      # Triggered automatically on merge to main, or manually with plan-and-apply
 
       - name: Terraform Apply
-        if: inputs.action == 'plan-and-apply'
+        if: github.event_name == 'push' || inputs.action == 'plan-and-apply'
         run: terraform apply -auto-approve tfplan
