@@ -9,14 +9,6 @@ on:
       - "infra/**"
       - "environments/**"
 
-  # Run apply automatically when PR is merged to main
-  push:
-    branches:
-      - main
-    paths:
-      - "infra/**"
-      - "environments/**"
-
   # Manual trigger — useful for deploying to prod or re-running plan on dev
   workflow_dispatch:
     inputs:
@@ -39,13 +31,11 @@ on:
 
 jobs:
   terraform:
-    name: Terraform ${{ github.event_name == 'pull_request' && 'Plan' || github.event_name == 'push' && 'Apply' || inputs.action }}
+    name: Terraform ${{ github.event_name == 'pull_request' && 'Plan' || inputs.action }}
     runs-on: ubuntu-latest
 
-    # Derive environment:
-    #   PR / push to main → prod
-    #   Manual            → user input
-    environment: ${{ github.event_name != 'workflow_dispatch' && 'prod' || inputs.environment }}
+    # Derive environment: PR to main → prod, manual → user input
+    environment: ${{ github.event_name == 'pull_request' && 'prod' || inputs.environment }}
 
     permissions:
       id-token: write
@@ -57,7 +47,7 @@ jobs:
         working-directory: infra
 
     env:
-      TF_ENV: ${{ github.event_name != 'workflow_dispatch' && 'prod' || inputs.environment }}
+      TF_ENV: ${{ github.event_name == 'pull_request' && 'prod' || inputs.environment }}
 
     steps:
       # ── Setup ────────────────────────────────────────────────────────────────
@@ -94,7 +84,8 @@ jobs:
           terraform plan \
             -var-file="$GITHUB_WORKSPACE/environments/${{ env.TF_ENV }}/${{ env.TF_ENV }}.tfvars" \
             -out=tfplan \
-            -no-color 2>&1 | tee plan_output.txt
+            -no-color > plan_output.txt 2>&1
+          cat plan_output.txt
 
       # Upload plan as artifact — reused by apply step and available for review
       - name: Upload Plan Artifact
@@ -121,8 +112,8 @@ jobs:
             });
 
       # ── Apply ─────────────────────────────────────────────────────────────────
-      # Triggered automatically on merge to main, or manually with plan-and-apply
+      # Only runs when manually selecting plan-and-apply
 
       - name: Terraform Apply
-        if: github.event_name == 'push' || inputs.action == 'plan-and-apply'
+        if: inputs.action == 'plan-and-apply'
         run: terraform apply -auto-approve tfplan
