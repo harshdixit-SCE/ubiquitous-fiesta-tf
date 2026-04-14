@@ -95,6 +95,24 @@ resource "aws_launch_template" "this" {
     security_groups             = [aws_security_group.instance.id]
   }
 
+  # Enforce IMDSv2 — prevents SSRF attacks from stealing instance credentials
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+
+  # Encrypt root volume at rest
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = 20
+      volume_type           = "gp3"
+      encrypted             = true
+      delete_on_termination = true
+    }
+  }
+
   user_data = base64encode(var.user_data)
 
   tag_specifications {
