@@ -69,6 +69,24 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
+variable "web_min_size" {
+  type        = number
+  description = "Minimum number of web instances"
+  default     = 1
+}
+
+variable "web_max_size" {
+  type        = number
+  description = "Maximum number of web instances"
+  default     = 3
+}
+
+variable "web_desired_capacity" {
+  type        = number
+  description = "Desired number of web instances"
+  default     = 2
+}
+
 variable "app_min_size" {
   type        = number
   description = "Minimum number of app instances"

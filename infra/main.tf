@@ -41,6 +41,39 @@ module "app" {
   project_tags          = var.project_tags
 }
 
+# Web ALB — internet-facing, in public subnets, accepts traffic from internet
+module "web_alb" {
+  source       = "./modules/alb"
+  namespace    = var.namespace
+  env          = var.env
+  name         = "web"
+  vpc_id       = module.network.vpc_id
+  subnet_ids   = module.network.public_subnet_ids
+  internal     = false
+  ingress_cidr = "0.0.0.0/0"
+  project_tags = var.project_tags
+}
+
+# Web ASG — in public subnets, only accepts traffic from web ALB
+module "web" {
+  source                = "./modules/asg"
+  namespace             = var.namespace
+  env                   = var.env
+  name                  = "web"
+  vpc_id                = module.network.vpc_id
+  subnet_ids            = module.network.public_subnet_ids
+  alb_security_group_id = module.web_alb.security_group_id
+  target_group_arn      = module.web_alb.target_group_arn
+  instance_type         = var.instance_type
+  min_size              = var.web_min_size
+  max_size              = var.web_max_size
+  desired_capacity      = var.web_desired_capacity
+  user_data             = templatefile("${path.module}/templates/web_user_data.sh", {
+    app_alb_dns = module.app_alb.alb_dns_name
+  })
+  project_tags          = var.project_tags
+}
+
 module "database" {
   source = "./modules/rds"
 
