@@ -29,3 +29,8 @@ instance_type        = "t3.micro"
 app_min_size         = 1
 app_max_size         = 2
 app_desired_capacity = 1
+
+# Web ASG Configuration
+web_min_size         = 1
+web_max_size         = 2
+web_desired_capacity = 1

@@ -1,3 +1,13 @@
+output "web_alb_dns" {
+  description = "Public DNS name of the web ALB — use this to access the application"
+  value       = module.web_alb.alb_dns_name
+}
+
+output "app_alb_dns" {
+  description = "Internal DNS name of the app ALB"
+  value       = module.app_alb.alb_dns_name
+}
+
 output "vpc_id" {
   description = "The ID of the VPC"
   value       = module.network.vpc_id
