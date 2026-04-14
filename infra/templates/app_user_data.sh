@@ -2,7 +2,7 @@
 set -e
 
 # Install web server and MySQL client for DB connectivity validation
-dnf install -y nginx mysql
+dnf install -y nginx mariadb105
 
 # Create health check page
 cat > /usr/share/nginx/html/index.html <<HTML
