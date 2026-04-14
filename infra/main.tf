@@ -64,6 +64,7 @@ module "web" {
   subnet_ids            = module.network.public_subnet_ids
   alb_security_group_id = module.web_alb.security_group_id
   target_group_arn      = module.web_alb.target_group_arn
+  associate_public_ip   = true
   instance_type         = var.instance_type
   min_size              = var.web_min_size
   max_size              = var.web_max_size
