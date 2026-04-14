@@ -11,9 +11,17 @@ on:
         options:
           - dev
           - prod
-      confirm:
-        description: "Type DESTROY to confirm — this will delete all resources"
+      action:
+        description: "Action to perform"
         required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - plan-and-destroy
+      confirm:
+        description: "Type DESTROY to confirm — only required for plan-and-destroy"
+        required: false
         type: string
 
 jobs:
@@ -31,9 +39,9 @@ jobs:
 
     steps:
       - name: Validate confirmation
-        if: inputs.confirm != 'DESTROY'
+        if: inputs.action == 'plan-and-destroy' && inputs.confirm != 'DESTROY'
         run: |
-          echo "Confirmation failed. You must type DESTROY to proceed."
+          echo "Confirmation failed. You must type DESTROY to proceed with plan-and-destroy."
           exit 1
 
       - name: Checkout
@@ -55,8 +63,12 @@ jobs:
           terraform init \
             -backend-config="$GITHUB_WORKSPACE/environments/${{ inputs.environment }}/backend.hcl"
 
-      - name: Terraform Destroy
+      - name: Terraform Plan Destroy
         run: |
-          terraform destroy \
+          terraform plan -destroy \
             -var-file="$GITHUB_WORKSPACE/environments/${{ inputs.environment }}/${{ inputs.environment }}.tfvars" \
-            -auto-approve
+            -out=tfdestroyplan
+
+      - name: Terraform Destroy
+        if: inputs.action == 'plan-and-destroy'
+        run: terraform apply -auto-approve tfdestroyplan
