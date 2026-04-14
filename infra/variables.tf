@@ -62,3 +62,29 @@ variable "skip_final_snapshot" {
   description = "Skip final snapshot on deletion"
 }
 
+# ASG Configuration
+variable "instance_type" {
+  type        = string
+  description = "EC2 instance type for ASG instances"
+  default     = "t3.micro"
+}
+
+variable "app_min_size" {
+  type        = number
+  description = "Minimum number of app instances"
+  default     = 1
+}
+
+variable "app_max_size" {
+  type        = number
+  description = "Maximum number of app instances"
+  default     = 3
+}
+
+variable "app_desired_capacity" {
+  type        = number
+  description = "Desired number of app instances"
+  default     = 2
+}
+
+

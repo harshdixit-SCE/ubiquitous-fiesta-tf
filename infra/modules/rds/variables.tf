@@ -71,3 +71,4 @@ variable "skip_final_snapshot" {
   description = "Skip final snapshot on deletion (set to false for production)"
   default     = false
 }
+
