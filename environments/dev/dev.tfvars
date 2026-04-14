@@ -23,3 +23,9 @@ allocated_storage       = 20
 engine_version          = "8.0"
 backup_retention_period = 7
 skip_final_snapshot     = true
+
+# ASG Configuration
+instance_type        = "t3.micro"
+app_min_size         = 1
+app_max_size         = 2
+app_desired_capacity = 1
