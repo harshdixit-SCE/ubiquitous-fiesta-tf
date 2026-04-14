@@ -69,6 +69,12 @@ variable "user_data" {
   default     = ""
 }
 
+variable "associate_public_ip" {
+  type        = bool
+  description = "Whether to assign a public IP to instances (true for web layer, false for app layer)"
+  default     = false
+}
+
 variable "project_tags" {
   type        = map(string)
   description = "Common tags applied to all resources"

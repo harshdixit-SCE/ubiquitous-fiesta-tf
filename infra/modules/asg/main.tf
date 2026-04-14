@@ -91,7 +91,7 @@ resource "aws_launch_template" "this" {
   }
 
   network_interfaces {
-    associate_public_ip_address = false
+    associate_public_ip_address = var.associate_public_ip
     security_groups             = [aws_security_group.instance.id]
   }
 
