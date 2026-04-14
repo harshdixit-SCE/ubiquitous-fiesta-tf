@@ -1,11 +1,11 @@
 #!/bin/bash
-set -e
+set -xe
 
 # Install web server
 dnf install -y nginx
 
 # Configure nginx to proxy traffic to the app layer ALB
-cat > /etc/nginx/conf.d/app-proxy.conf <<NGINX
+cat > /etc/nginx/conf.d/app-proxy.conf <<NGINX_CONF
 server {
     listen 80;
     server_name _;
@@ -22,9 +22,9 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
 }
-NGINX
+NGINX_CONF
 
-# Remove default config to avoid conflict
+# Remove default nginx config to avoid port conflict
 rm -f /etc/nginx/conf.d/default.conf
 
 # Enable and start nginx
