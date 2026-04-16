@@ -7,8 +7,9 @@ resource "random_password" "db" {
 
 # Store credentials in AWS Secrets Manager
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name        = "${var.namespace}/${var.env}/db/credentials"
-  description = "DB credentials for ${var.namespace} ${var.env} MySQL instance"
+  name                    = "${var.namespace}/${var.env}/db/credentials"
+  description             = "DB credentials for ${var.namespace} ${var.env} MySQL instance"
+  recovery_window_in_days = var.secret_recovery_window
 
   tags = merge(var.project_tags, {
     Name = "${var.namespace}-${var.env}-db-credentials"
