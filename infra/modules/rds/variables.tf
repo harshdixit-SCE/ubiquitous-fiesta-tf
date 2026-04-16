@@ -72,3 +72,9 @@ variable "skip_final_snapshot" {
   default     = false
 }
 
+variable "secret_recovery_window" {
+  type        = number
+  description = "Number of days before secret is permanently deleted (0 = immediate, use 0 for dev/test)"
+  default     = 0
+}
+
