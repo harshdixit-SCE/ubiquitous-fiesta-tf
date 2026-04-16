@@ -1,15 +1,7 @@
 name: Terraform Deploy
 
 on:
-  # Run plan automatically on pull requests targeting main
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "infra/**"
-      - "environments/**"
-
-  # Manual trigger — useful for deploying to prod or re-running plan on dev
+  # Manual trigger only — automatic triggers disabled until prod is ready
   workflow_dispatch:
     inputs:
       environment:
@@ -31,23 +23,21 @@ on:
 
 jobs:
   terraform:
-    name: Terraform ${{ github.event_name == 'pull_request' && 'Plan' || inputs.action }}
+    name: Terraform ${{ inputs.action }}
     runs-on: ubuntu-latest
-
-    # Derive environment: PR to main → prod, manual → user input
-    environment: ${{ github.event_name == 'pull_request' && 'prod' || inputs.environment }}
+    environment: ${{ inputs.environment }}
 
     permissions:
       id-token: write
       contents: read
-      pull-requests: write # required to post plan as PR comment
+      pull-requests: write
 
     defaults:
       run:
         working-directory: infra
 
     env:
-      TF_ENV: ${{ github.event_name == 'pull_request' && 'prod' || inputs.environment }}
+      TF_ENV: ${{ inputs.environment }}
 
     steps:
       # ── Setup ────────────────────────────────────────────────────────────────
@@ -94,22 +84,6 @@ jobs:
           name: tfplan-${{ env.TF_ENV }}-${{ github.run_id }}
           path: infra/tfplan
           retention-days: 5
-
-      # Post plan output as a PR comment so reviewers can see what will change
-      - name: Comment Plan on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync('infra/plan_output.txt', 'utf8');
-            const truncated = plan.length > 60000 ? plan.slice(0, 60000) + '\n\n... (truncated)' : plan;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## Terraform Plan — \`${{ env.TF_ENV }}\`\n\`\`\`hcl\n${truncated}\n\`\`\``
-            });
 
       # ── Apply ─────────────────────────────────────────────────────────────────
       # Only runs when manually selecting plan-and-apply
